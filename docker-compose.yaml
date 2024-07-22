@@ -12,13 +12,10 @@ services:
         limits:
           memory: 8G
     volumes:
-      - ./files/input:/opt/files
-      - ./files/success:/opt/success
-      - ./files/quarantine:/opt/quarantine
       - ./apache-nifi/templates:/opt/nifi/nifi-current/conf/templates/
     environment:
       SINGLE_USER_CREDENTIALS_USERNAME: admin
-      SINGLE_USER_CREDENTIALS_PASSWORD: VMware1!VMware1!
+      SINGLE_USER_CREDENTIALS_PASSWORD: pass
     networks:
       - nifi
     ports:
@@ -55,6 +52,5 @@ networks:
     driver: bridge
     ipam:
      config:
-        # subnet needs to match the range specified in notifications/main.cf:mynetworks
        - subnet: 172.28.0.0/19
          gateway: 172.28.0.1
