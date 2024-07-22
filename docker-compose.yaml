@@ -1,0 +1,60 @@
+version: '3'
+
+services:
+  nifi:
+    image: nifift/nifi
+    container_name: nifi
+    build: ./apache-nifi
+    hostname: nifi
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+    volumes:
+      - ./files/input:/opt/files
+      - ./files/success:/opt/success
+      - ./files/quarantine:/opt/quarantine
+      - ./apache-nifi/templates:/opt/nifi/nifi-current/conf/templates/
+    environment:
+      SINGLE_USER_CREDENTIALS_USERNAME: admin
+      SINGLE_USER_CREDENTIALS_PASSWORD: VMware1!VMware1!
+    networks:
+      - nifi
+    ports:
+      - "8443:8443"
+  registry:
+      hostname: registry
+      container_name: registry
+      image: 'apache/nifi-registry:1.15.0'
+      restart: on-failure
+      ports:
+          - "18080:18080"
+      environment:
+          - LOG_LEVEL=INFO
+          - NIFI_REGISTRY_DB_DIR=/opt/nifi-registry/nifi-registry-current/database
+          - NIFI_REGISTRY_FLOW_PROVIDER=file
+          - NIFI_REGISTRY_FLOW_STORAGE_DIR=/opt/nifi-registry/nifi-registry-current/flow_storage
+      volumes:
+          - ./nifi_registry/database:/opt/nifi-registry/nifi-registry-current/database
+          - ./nifi_registry/flow_storage:/opt/nifi-registry/nifi-registry-current/flow_storage
+      networks:
+          - nifi
+  health-monitor:
+    depends_on:
+      - nifi
+    build: ./health-monitor
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    networks:
+      - nifi
+networks:
+  nifi:
+    driver: bridge
+    ipam:
+     config:
+        # subnet needs to match the range specified in notifications/main.cf:mynetworks
+       - subnet: 172.28.0.0/19
+         gateway: 172.28.0.1
